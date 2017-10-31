@@ -1,4 +1,4 @@
-import mido
+import mido, argparse
 from time import sleep
 from random import choice, randrange
 
@@ -14,17 +14,19 @@ except RuntimeError:
 
 colormap = {'off': '1C', 'red': '15', 'yellow': '13', 'green': '16', 'blue': '18', 'purple': '19', 'light blue': '1A', 'white': '1B' }
 colors = list(colormap.values())
-board = range(0x0, 0x2F)
-board = [format(b, '02X') for b in board]
+boardindexes = range(0x0, 0x2F)
+board = [format(b, '02X') for b in boardindexes]
+pads = board[:25]
+banks = board[25:33]
 
+#bankcolors = 
 
-#bank1x = ["90 0" + str(x) + " 2D" for x in range(0, 10)]
 
 def spot_on(loc, hexcolor):
     m = mido.Message.from_hex("90 "+ loc +  " " + hexcolor)
     out.send(m)
 
-def pad_on(hexcolor):
+def pads_on(hexcolor):
     [spot_on(loc, hexcolor) for loc in board[:25]]
 
 def board_on(hexcolor):
@@ -38,7 +40,7 @@ def board_on(hexcolor):
 
     for b in bank1:
         out.send(b)
-    print(str(bank1[0]))
+    #print(str(bank1[0]))
 
 def iterate_col():
     for c in range(0, 128):
@@ -59,16 +61,29 @@ def party():
         sleep(0.02)
 
 
-try:
-    pad_on(colormap['yellow'])
-    #party() 
-    while True:
-        h = input('hex to send: ')
-        out.send(mido.Message.from_hex(str(h)))
+# if running directly, provide menu of test functions
+if __name__ == '__main__':     
+    parser = argparse.ArgumentParser(description="Midi interface testing tool")     
+    parser.add_argument("-b", "--board", action="store_true")
+    parser.add_argument("-p", "--pads", action="store_true")
+    parser.add_argument("-w", "--wild", action="store_true")
 
-    col = input('color? ')
-    board_on(colormap[col])
-except ValueError:
-    print("Value Error.")
-    out.close()
-    print("Closed port")
+    args = parser.parse_args()
+    if args.board:
+        board_on(colormap['purple'])
+        sleep(0.5)
+    if args.pads:
+        pads_on(colormap['light blue'])
+        sleep(0.5)
+    if args.wild:
+        party()
+
+    try:
+        pads_on(colormap['white'])
+        while True:
+            h = input('hex to send: ')
+            out.send(mido.Message.from_hex(str(h)))
+    except ValueError:
+        print("Value Error.")
+        out.close()
+        print("Closed port")
