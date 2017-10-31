@@ -33,3 +33,11 @@ if __name__ == "__main__":
       (args.ip, args.port), dispatcher)
   print("Serving on {}".format(server.server_address))
   server.serve_forever()
+
+
+
+
+  # /layerX/select
+  # /layerX/clipX/connect
+  # /layerX/clipX/preview
+
