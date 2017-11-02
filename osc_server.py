@@ -9,9 +9,9 @@ from midi_interface import *
 
 # 3rd layer isn't a clip layer in resolume
 def layermap(idx):
-    return colormap['green']
+    return colormap['yellow']
 def padmap(layer_index):
-    return colormap[['yellow', 'red', 'green', 'purple'][layer_index]]
+    return colormap[['red', 'white', 'green', 'blue'][layer_index]]
 
 # banks have selected and unselected only?
 Bank = Enum('Bank', ['SEL', 'NOSEL'])
@@ -34,7 +34,7 @@ def bank_select(n):
     pass
 
 def load_layer_pads():
-    c_off = colormap['off']
+    c_off = colormap['yellow']
     for i, state in enumerate(ClipState):
         if state == Pad.OFF:
             spot_on(pads[i], c_off)
@@ -72,14 +72,12 @@ def layer_select_handler(addr, args):
     print("layer select {}: {}".format(n, args))
     layer_select(n, args == 1)
 
+# Clips must be owned by the first layer that plays them
+# Other layers attempting to play them are denied.
 def try_clip_select(layer, loc):
     owner = ClipState[loc]
     if owner == Pad.OFF:
-        if layer >= 2: 
-            l = layer + 2 
-        else: 
-            l = layer + 2
-        newPad = Pad(l)
+        newPad = Pad(layer + 2)
         ClipState[loc] = newPad
         print("ClipState[{}] => {}".format(loc, str(newPad)))
     else:
@@ -87,24 +85,6 @@ def try_clip_select(layer, loc):
 
 
 def clip_select_handler(addr, args):
-    # Update the Layer's Pad State, and the LEDs
-    # If we change the layer then clip or vice versa quickly
-    # is that going to reflect correctly using a global OSC?
-    # May need to check that disconnects are coming from the 
-    # current pad..
-    # Is also going to wreck havok with autoplay....
-
-    # Exception thrown: L2 playing clip from L1
-    # layer change to L2 from L1
-    # clip handler fires first
-    # PadState updated on wrong layer
-
-    #activelayer/clip/connect 1 not fired when switching layers
-    # always seems to come right after clip_select when switching clips
-    # delayed by transition time?
-
-    # Clips must be owned by the first layer that plays them
-    # Other layers attempting to play them are denied.
     y, x = [int(s) for s in re.findall(r'\d+', addr)]
     on = args == 1
     y = range(6)[-y]    # invert to translate to board
@@ -128,10 +108,6 @@ def clip_select_handler(addr, args):
         print("ClipState[{}] => {}".format(loc, "Pad.OFF"))
         load_layer_pads()
 
-def activelayer_clip_connect_handler(addr, args):
-    print("\nactive layer clip connect args:{}".format(args))
-    #if args == 1:
-        #load_layer_pads()
 
 
 if __name__ == "__main__":
@@ -151,7 +127,7 @@ if __name__ == "__main__":
     #dispatcher.map("/volume", print_volume_handler, "Volume")
     #dispatcher.map("/logvolume", print_compute_handler, "Log volume", math.log)
 
-    for i in range(8):
+    for i in range(1, 6):
         dispatcher.map("/layer" + str(i) +  "/select", layer_select_handler)
     for x in range(1, 6):
         for y in range(1, 6):
@@ -159,7 +135,7 @@ if __name__ == "__main__":
 
 
 
-    dispatcher.map("/activelayer/clip/connect", activelayer_clip_connect_handler)
+    #dispatcher.map("/activelayer/clip/connect", activelayer_clip_connect_handler)
 
     #server = osc_server.ThreadingOSCUDPServer(
     server = osc_server.BlockingOSCUDPServer(
@@ -187,3 +163,7 @@ def print_compute_handler(unused_addr, args, volume):
     except ValueError: 
         pass
 
+#def activelayer_clip_connect_handler(addr, args):
+    #print("\nactive layer clip connect args:{}".format(args))
+    #if args == 1:
+        #load_layer_pads()
