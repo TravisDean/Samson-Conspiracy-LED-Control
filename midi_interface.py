@@ -23,7 +23,10 @@ banks = board[25:33]
 
 
 def spot_on(loc, hexcolor):
-    m = mido.Message.from_hex("90 "+ loc +  " " + hexcolor)
+    #print(str(loc))
+    msg = "90 "+ loc +  " " + hexcolor
+    #print(msg)
+    m = mido.Message.from_hex(msg)
     out.send(m)
 
 def pads_on(hexcolor):
